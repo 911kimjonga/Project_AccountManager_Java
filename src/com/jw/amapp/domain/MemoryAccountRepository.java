@@ -6,7 +6,7 @@ package com.jw.amapp.domain;
  * @author 김종원
  * @since  1.0
  */
-public class MemoryAccountRepository implements AccountRepository {
+public class MemoryAccountRepository /* implements AccountRepository */ {
 
     // 필드
     private Account[] accounts;
@@ -56,10 +56,10 @@ public class MemoryAccountRepository implements AccountRepository {
      * @return 검색된 계좌
      */
     public Account searchAccount(String accountNum) {
-        for (int i = 0; i < count; i++) {
-            String number = accounts[i].getAccountNum();
+        for (Account account : accounts) {
+            String number = account.getAccountNum();
             if ( number.equals(accountNum)) { // 동일 계좌번호 여부 확인
-                return accounts[i];
+                return account;
             }
         }
         return null;

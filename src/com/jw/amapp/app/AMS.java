@@ -1,23 +1,25 @@
 package com.jw.amapp.app;
 
+import java.util.List;
 import java.util.Scanner;
 
 import com.jw.amapp.domain.Account;
 import com.jw.amapp.domain.MinusAccount;
 import com.jw.amapp.domain.AccountUtil;
 import com.jw.amapp.domain.AccountRepository;
-import com.jw.amapp.domain.MemoryAccountRepository;
+import com.jw.amapp.domain.ListAccountRepository;
 import com.jw.amapp.exception.AccountException;
+
 
 /**
  * AMS 시스템 실행을 위한 Main 클래스
  *
  * @author 김종원
- * @since  1.0
+ * @since  2.0
  */
 public class AMS {
 
-    private static AccountRepository repository = new MemoryAccountRepository();
+    private static AccountRepository repository = new ListAccountRepository();
     private static AccountUtil accountUtil = new AccountUtil();
     private static Scanner scanner = new Scanner(System.in);
 
@@ -127,11 +129,11 @@ public class AMS {
      * 계좌 조회 기능 실행
      */
     private static void listAccounts() {
-        Account[] list = repository.getAccounts();
+        List<Account> list = repository.getAccounts();
         if (list != null) {
             menuHeadLine();
-            for (int i = 0; i < repository.getCount(); i++) {
-                System.out.println(list[i]);
+            for (Account account : list) {
+                System.out.println(account);
             }
             System.out.println("---------------------------------------------------------");
         } else {
@@ -157,6 +159,9 @@ public class AMS {
             long inputMoney = Long.parseLong(scanner.nextLine());
             try {
                 accountUtil.deposit(searchAccount, inputMoney);
+                System.out.println("---------------------------------------------------------");
+                System.out.println("※ " + number + " 계좌에 " + inputMoney + " 원 입금 정상 처리되었습니다.");
+                System.out.println("---------------------------------------------------------");
                 menuHeadLine();
                 System.out.println(searchAccount);
                 System.out.println("---------------------------------------------------------");
@@ -191,6 +196,9 @@ public class AMS {
                 long inputMoney = Long.parseLong(scanner.nextLine());
                 try {
                     accountUtil.withdraw(searchAccount, inputMoney);
+                    System.out.println("---------------------------------------------------------");
+                    System.out.println("※ " + number + " 계좌에서 " + inputMoney + " 원 출금 정상 처리되었습니다.");
+                    System.out.println("---------------------------------------------------------");
                     menuHeadLine();
                     System.out.println(searchAccount);
                     System.out.println("---------------------------------------------------------");
