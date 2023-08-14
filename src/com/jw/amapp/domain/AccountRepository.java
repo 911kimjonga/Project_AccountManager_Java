@@ -14,6 +14,6 @@ public interface AccountRepository {
     public boolean createAccount(Account account);
     public Account searchAccount(String accountNum);
     public List<Account> searchAccountByOwner(String accountOwner);
-    public boolean removeAccount(String accountNum);
+    public boolean removeAccount(String accountNum, int passwd);
     
 }

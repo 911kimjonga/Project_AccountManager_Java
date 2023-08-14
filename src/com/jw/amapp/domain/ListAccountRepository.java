@@ -8,7 +8,7 @@ import java.util.List;
  * 메모리(리스트, 콜렉션)를 통한 은행계좌 목록 저장 및 관리 (생성, 검색, 삭제) 구현체
  * 
  * @author 김종원
- * @since  2.0
+ * @since  3.0
  *
  */
 public class ListAccountRepository implements AccountRepository {
@@ -92,12 +92,14 @@ public class ListAccountRepository implements AccountRepository {
      * @param accountNum 삭제할 계좌의 계좌번호
      * @return 계좌 삭제 성공 여부
      */
-    public boolean removeAccount(String accountNum) {
+    public boolean removeAccount(String accountNum, int passwd) {
         for (int i = 0; i < accounts.size(); i++) {
             Account account = accounts.get(i);
             if (account.getAccountNum().equals(accountNum)) {
-                accounts.remove(i);
-                return true;
+                if (account.getPasswd() == passwd) {
+                    accounts.remove(i);
+                    return true;
+                }
             }
         }
         return false;
