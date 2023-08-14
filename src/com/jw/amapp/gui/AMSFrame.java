@@ -16,12 +16,14 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.IOException;
 import java.util.List;
 
 import javax.swing.JOptionPane;
 
-import com.jw.amapp.app.AMS;
 import com.jw.amapp.domain.Account;
+import com.jw.amapp.domain.AccountRepository;
+import com.jw.amapp.domain.ObjectAccountRepository;
 import com.jw.amapp.domain.MinusAccount;
 import com.jw.amapp.exception.AccountException;
 import com.jw.amapp.util.AccountType;
@@ -32,14 +34,13 @@ import com.jw.amapp.util.ActionType;
  * AMS 시스템 GUI 환경 구축
  * 
  * @author 김종원
- *
  */
 
 public class AMSFrame extends Frame {
 
     // 필드
     Label accountKindL, accountNumL, accountOwnerL, pwdL, accountListL, unitWonL, depositL, borrowMoneyL, actionTypeL;
-    Button checkB, deleteB, searchB, registB, totalViewB;
+    Button searchNumB, deleteB, searchOwnerB, registB, totalViewB;
     TextField inputAccountNumTF, inputAccountOwnerTF, inputPwdTF, inputDepositTF, inputBorrowMoneyTF;
     Choice choiceAccountTypeC, choiceActionTypeC;
     TextArea accountListTA;
@@ -47,12 +48,14 @@ public class AMSFrame extends Frame {
     GridBagLayout gridBagLayout;
     GridBagConstraints gridBagConstraints;
 
+    AccountRepository repository;
+    
     // 생성자
-    public AMSFrame() {
+    public AMSFrame() throws IOException, ClassNotFoundException {
         this("기본 타이틀");
     }
 
-    public AMSFrame(String title) {
+    public AMSFrame(String title) throws IOException, ClassNotFoundException {
         super(title);
 
         // Label 영역
@@ -61,7 +64,7 @@ public class AMSFrame extends Frame {
         accountOwnerL = new Label("예금주명", Label.CENTER);
         pwdL = new Label("비밀번호", Label.CENTER);
         depositL = new Label("입금금액", Label.CENTER);
-        borrowMoneyL = new Label("대출한도", Label.CENTER);
+        borrowMoneyL = new Label("대출금액", Label.CENTER);
         accountListL = new Label("계좌목록", Label.CENTER);
         unitWonL = new Label("(단위 : 원)", Label.CENTER);
         actionTypeL = new Label("기능종류", Label.CENTER);
@@ -87,9 +90,9 @@ public class AMSFrame extends Frame {
         inputBorrowMoneyTF = new TextField();
 
         // Button 영역
-        checkB = new Button("조회");
+        searchNumB = new Button("조회");
         deleteB = new Button("삭제");
-        searchB = new Button("검색");
+        searchOwnerB = new Button("검색");
 
         registB = new Button("신규등록");
         totalViewB = new Button("전체조회");
@@ -100,6 +103,9 @@ public class AMSFrame extends Frame {
         // GridBag 생성
         gridBagLayout = new GridBagLayout();
         gridBagConstraints = new GridBagConstraints();
+
+        // AccountRepository 생성
+        repository = new ObjectAccountRepository();
 
     }
 
@@ -112,7 +118,7 @@ public class AMSFrame extends Frame {
      * @param w 컴포넌트 넓이
      * @param h 컴포넌트 높이
      */
-    private void addComponent(Component c, int x, int y, int w, int h) {
+    private void addCom(Component c, int x, int y, int w, int h) {
         gridBagConstraints.gridx = x;
         gridBagConstraints.gridy = y;
         gridBagConstraints.gridwidth = w;
@@ -134,12 +140,12 @@ public class AMSFrame extends Frame {
      * @param weightX 컴포넌트 x 가중치
      * @param padX 컴포넌트 x 내부여백
      */
-    private void addDiffComponent(Component c, int x, int y, int w, int h, double weightX, int padX) {
+    private void addComWP(Component c, int x, int y, int w, int h, double weightX, int padX) {
         gridBagConstraints.weightx = weightX;
         gridBagConstraints.weighty = 0;
         gridBagConstraints.ipadx = padX;
         gridBagConstraints.ipady = 0;
-        addComponent(c, x, y, w, h);
+        addCom(c, x, y, w, h);
     }
 
     /**
@@ -149,235 +155,130 @@ public class AMSFrame extends Frame {
 
         setLayout(gridBagLayout);
 
-        addComponent(accountKindL, 0, 0, 1, 1);
-        addComponent(accountNumL, 0, 1, 1, 1);
-        addComponent(accountOwnerL, 0, 2, 1, 1);
-        addComponent(pwdL, 0, 3, 1, 1);
-        addComponent(borrowMoneyL, 0, 4, 1, 1);
-        addComponent(accountListL, 0, 5, 1, 1);
-        addComponent(unitWonL, 5, 5, 1, 1);
-        addComponent(depositL, 3, 3, 1, 1);
-        addComponent(actionTypeL, 3, 0, 1, 1);
+        addCom(accountKindL, 0, 0, 1, 1);
+        addCom(accountNumL, 0, 1, 1, 1);
+        addCom(accountOwnerL, 0, 2, 1, 1);
+        addCom(pwdL, 0, 3, 1, 1);
+        addCom(borrowMoneyL, 0, 4, 1, 1);
+        addCom(accountListL, 0, 5, 1, 1);
+        addCom(unitWonL, 5, 5, 1, 1);
+        addCom(depositL, 3, 3, 1, 1);
+        addCom(actionTypeL, 3, 0, 1, 1);
 
-        addDiffComponent(choiceAccountTypeC, 1, 0, 1, 1, 1.0, 30);
-        addDiffComponent(choiceActionTypeC, 4, 0, 1, 1, 1.0, 30);
+        addComWP(choiceAccountTypeC, 1, 0, 1, 1, 1.0, 30);
+        addComWP(choiceActionTypeC, 4, 0, 1, 1, 1.0, 30);
 
-        addDiffComponent(inputAccountNumTF, 1, 1, 2, 1, 0.0, 50);
-        addDiffComponent(inputAccountOwnerTF, 1, 2, 2, 1, 0.0, 50);
-        addDiffComponent(inputPwdTF, 1, 3, 2, 1, 0.0, 50);
-        addDiffComponent(inputDepositTF, 4, 3, 2, 1, 1.0, 50);
-        addDiffComponent(inputBorrowMoneyTF, 1, 4, 2, 1, 1.0, 0);
+        addComWP(inputAccountNumTF, 1, 1, 2, 1, 0.0, 50);
+        addComWP(inputAccountOwnerTF, 1, 2, 2, 1, 0.0, 50);
+        addComWP(inputPwdTF, 1, 3, 2, 1, 0.0, 50);
+        addComWP(inputDepositTF, 4, 3, 2, 1, 1.0, 50);
+        addComWP(inputBorrowMoneyTF, 1, 4, 2, 1, 1.0, 0);
 
-        addComponent(checkB, 3, 1, 1, 1);
-        addComponent(deleteB, 4, 1, 1, 1);
-        addComponent(searchB, 3, 2, 1, 1);
+        addCom(searchNumB, 3, 1, 1, 1);
+        addCom(deleteB, 4, 1, 1, 1);
+        addCom(searchOwnerB, 3, 2, 1, 1);
 
-        addComponent(registB, 3, 4, 1, 1);
-        addComponent(totalViewB, 4, 4, 1, 1);
+        addCom(registB, 3, 4, 1, 1);
+        addCom(totalViewB, 4, 4, 1, 1);
 
-        addComponent(accountListTA, 0, 6, 6, 5);
-
+        addCom(accountListTA, 0, 6, 6, 5);
     }
 
     /**
-     * 초이스 버튼에 따른 입력창 및 버튼 활성화 여부
-     */
-
-    // 모두 입력 불가
-    public void allInputDisable() {
-        inputAccountNumTF.setEnabled(false);
-        inputAccountOwnerTF.setEnabled(false);
-        inputDepositTF.setEnabled(false);
-        inputPwdTF.setEnabled(false);
-        inputBorrowMoneyTF.setEnabled(false);
-        choiceActionTypeC.setEnabled(false);
-        checkB.setEnabled(false);
-        deleteB.setEnabled(false);
-        searchB.setEnabled(false);
-        registB.setEnabled(false);
-        textFieldReset();
-    }
-
-    // 타입 선택
-    public void typeInputDisable() {
-        inputAccountNumTF.setEnabled(false);
-        inputAccountOwnerTF.setEnabled(false);
-        inputDepositTF.setEnabled(false);
-        inputPwdTF.setEnabled(false);
-        inputBorrowMoneyTF.setEnabled(false);
-        choiceActionTypeC.setEnabled(true);
-        checkB.setEnabled(false);
-        deleteB.setEnabled(false);
-        searchB.setEnabled(false);
-        registB.setEnabled(false);
-        textFieldReset();
-    }
-
-    // 입출금계좌 등록 입력 상태
-    public void generalInputEnable() {
-        inputAccountNumTF.setEnabled(false);
-        inputAccountOwnerTF.setEnabled(true);
-        inputDepositTF.setEnabled(true);
-        inputPwdTF.setEnabled(true);
-        inputBorrowMoneyTF.setEnabled(false);
-        choiceActionTypeC.setEnabled(true);
-        checkB.setEnabled(false);
-        deleteB.setEnabled(false);
-        searchB.setEnabled(false);
-        registB.setEnabled(true);
-        textFieldReset();
-    }
-
-    // 마이너스계좌 등록 입력 상태
-    public void minusInputEnable() {
-        inputAccountNumTF.setEnabled(false);
-        inputAccountOwnerTF.setEnabled(true);
-        inputDepositTF.setEnabled(true);
-        inputPwdTF.setEnabled(true);
-        inputBorrowMoneyTF.setEnabled(true);
-        choiceActionTypeC.setEnabled(true);
-        checkB.setEnabled(false);
-        deleteB.setEnabled(false);
-        searchB.setEnabled(false);
-        registB.setEnabled(true);
-        textFieldReset();
-    }
-
-    // 계좌 조회 (계좌번호)
-    public void checkEnable() {
-        inputAccountNumTF.setEnabled(true);
-        inputAccountOwnerTF.setEnabled(false);
-        inputDepositTF.setEnabled(false);
-        inputPwdTF.setEnabled(false);
-        inputBorrowMoneyTF.setEnabled(false);
-        choiceActionTypeC.setEnabled(true);
-        checkB.setEnabled(true);
-        deleteB.setEnabled(false);
-        searchB.setEnabled(false);
-        registB.setEnabled(false);
-        textFieldReset();
-    }
-
-    // 계좌 검색 (예금주명)
-    public void searchEnable() {
-        inputAccountNumTF.setEnabled(false);
-        inputAccountOwnerTF.setEnabled(true);
-        inputDepositTF.setEnabled(false);
-        inputPwdTF.setEnabled(false);
-        inputBorrowMoneyTF.setEnabled(false);
-        choiceActionTypeC.setEnabled(true);
-        checkB.setEnabled(false);
-        deleteB.setEnabled(false);
-        searchB.setEnabled(true);
-        registB.setEnabled(false);
-        textFieldReset();
-    }
-
-    // 계좌 삭제
-    public void deleteEnable() {
-        inputAccountNumTF.setEnabled(true);
-        inputAccountOwnerTF.setEnabled(false);
-        inputDepositTF.setEnabled(false);
-        inputPwdTF.setEnabled(true);
-        inputBorrowMoneyTF.setEnabled(false);
-        choiceActionTypeC.setEnabled(true);
-        checkB.setEnabled(false);
-        deleteB.setEnabled(true);
-        searchB.setEnabled(false);
-        registB.setEnabled(false);
-        textFieldReset();
-    }
-
-    /**
-     * 모든 입력창 공란으로 리셋
+     * 모든 입력창 공란으로 리셋하는 기능
+     *
      */
     public void textFieldReset() {
         inputAccountNumTF.setText("");
         inputAccountOwnerTF.setText("");
-        inputDepositTF.setText("");
         inputPwdTF.setText("");
+        inputDepositTF.setText("");
         inputBorrowMoneyTF.setText("");
+        
+    }
+    
+    /**
+     * 모든 입력창 및 버튼 사용 가능 여부
+     * @param enable 활성화 여부
+     */
+    public void allInputEnable(boolean enable) {
+        inputAccountNumTF.setEnabled(enable);
+        inputAccountOwnerTF.setEnabled(enable);
+        inputDepositTF.setEnabled(enable);
+        inputPwdTF.setEnabled(enable);
+        inputBorrowMoneyTF.setEnabled(enable);
+        choiceActionTypeC.setEnabled(enable);
+        searchNumB.setEnabled(enable);
+        deleteB.setEnabled(enable);
+        searchOwnerB.setEnabled(enable);
+        registB.setEnabled(enable);
+        textFieldReset();
     }
 
     /**
-     * 계좌 종류별 선택창 및 버튼 활성화 여부 (등록 기능 만)
+     * 기능 종류 선택 가능 여부
+     * @param enable 활성화 여부
      */
-    public void choiceAccountAddEnable() {
-        if (choiceAccountTypeC.getSelectedItem().equals("전체")) {
-            typeInputDisable();
-        } else if (choiceAccountTypeC.getSelectedItem().equals("입출금계좌")) {
-            generalInputEnable();
-        } else if (choiceAccountTypeC.getSelectedItem().equals("마이너스계좌")) {
-            minusInputEnable();
-        }
+    public void typeInputEnable(boolean enable) {
+        choiceActionTypeC.setEnabled(enable);
     }
 
     /**
-     * 선택 기능별 선택창 및 버튼 활성화 여부 (등록 기능 제외)
+     * 입출금계좌 등록시
+     * @param enable 활성화 여부
      */
-    public void choiceActionTypeEnable() {
-        if (choiceActionTypeC.getSelectedItem().equals("기능선택")) {
-            typeInputDisable();
-        } else if (choiceActionTypeC.getSelectedItem().equals("조회")) {
-            checkEnable();
-        } else if (choiceActionTypeC.getSelectedItem().equals("검색")) {
-            searchEnable();
-        } else if (choiceActionTypeC.getSelectedItem().equals("삭제")) {
-            deleteEnable();
-        }
+    public void generalInputEnable(boolean enable) {
+        inputAccountOwnerTF.setEnabled(enable);
+        inputDepositTF.setEnabled(enable);
+        inputPwdTF.setEnabled(enable);
+        choiceActionTypeC.setEnabled(enable);
+        registB.setEnabled(enable);
     }
 
     /**
-     * 계좌종류 초이스 선택시 입력창 및 버튼 활성화 여부
-     * 
-     * @param accountType 선택된 계좌 종류
+     * 마이너스계좌 등록시
+     * @param enable 활성화 여부
      */
-    public void selectAccountType(AccountType accountType) {
-        switch (accountType) {
-        case ACCOUNT_ALL:
-            allInputDisable();
-            choiceActionTypeC.select("기능선택");
-            break;
-        case ACCOUNT_GENERAL:
-            if (choiceActionTypeC.getSelectedItem().equals("등록")) {
-                generalInputEnable();
-            }
-            choiceActionTypeEnable();
-            break;
-        case ACCOUNT_MINUS:
-            if (choiceActionTypeC.getSelectedItem().equals("등록")) {
-                minusInputEnable();
-            }
-            choiceActionTypeEnable();
-            break;
-        }
+    public void minusInputEnable(boolean enable) {
+        inputAccountOwnerTF.setEnabled(enable);
+        inputDepositTF.setEnabled(enable);
+        inputPwdTF.setEnabled(enable);
+        inputBorrowMoneyTF.setEnabled(enable);
+        choiceActionTypeC.setEnabled(enable);
+        registB.setEnabled(enable);
     }
 
     /**
-     * 기능별 초이스 선택시 입력창 및 버튼 활성화 여부
-     * 
-     * @param actionType 선택된 기능
+     * 계좌번호로 계좌 조회시
+     * @param enable 활성화 여부
      */
-    public void selectActionType(ActionType actionType) {
-        switch (actionType) {
-        case ACTION_ALL:
-            typeInputDisable();
-            break;
-        case ACCOUNT_ADD:
-            choiceAccountAddEnable();
-            break;
-        case ACCOUNT_CHECK:
-            checkEnable();
-            break;
-        case ACCOUNT_SEARCH:
-            searchEnable();
-            break;
-        case ACCOUNT_DELETE:
-            deleteEnable();
-            break;
-        }
+    public void checkEnable(boolean enable) {
+        inputAccountNumTF.setEnabled(enable);
+        choiceActionTypeC.setEnabled(enable);
+        searchNumB.setEnabled(enable);
     }
 
+    /**
+     * 예금주 명으로 계좌 검색시
+     * @param enable 활성화 여부
+     */
+    public void searchEnable(boolean enable) {
+        inputAccountOwnerTF.setEnabled(enable);
+        choiceActionTypeC.setEnabled(enable);
+        searchOwnerB.setEnabled(enable);
+    }
+
+    /**
+     * 계좌 삭제시
+     * @param enable 활성화 여부
+     */
+    public void deleteEnable(boolean enable) {
+        inputAccountNumTF.setEnabled(enable);
+        inputPwdTF.setEnabled(enable);
+        choiceActionTypeC.setEnabled(enable);
+        deleteB.setEnabled(enable);
+    }
+    
     /**
      * 계좌 조회 헤드라인
      */
@@ -394,7 +295,7 @@ public class AMSFrame extends Frame {
      */
     public void allList() {
         accountListTA.setText("");
-        List<Account> list = AMS.repository.getAccounts();
+        List<Account> list = repository.getAccounts();
         printHeadLine();
         for (Account account : list) {
             accountListTA.append(account.toString() + "\n");
@@ -476,7 +377,7 @@ public class AMSFrame extends Frame {
                 account = new MinusAccount(accountOwner, passwd, inputDoposit, inputBorrow);
             }
 
-            AMS.repository.createAccount(account);
+            repository.createAccount(account);
             textFieldReset(); // TextField 초기화
             allList(); // 계좌 전체 조회
             JOptionPane.showMessageDialog(this, "정상 등록 처리되었습니다.");
@@ -487,9 +388,8 @@ public class AMSFrame extends Frame {
     /**
      * 계좌 삭제
      *
-     * @throws AccountException
      */
-    public void removeAccount() throws AccountException, NullPointerException {
+    public void removeAccount() {
 
         String accountNum = inputAccountNumTF.getText();
         String stringPasswd = inputPwdTF.getText();
@@ -523,7 +423,7 @@ public class AMSFrame extends Frame {
             textFieldReset(); // TextField 초기화
 
             int passwd = Integer.parseInt(stringPasswd);
-            Account searchAccount = AMS.repository.searchAccount(accountNum);
+            Account searchAccount = repository.searchAccount(accountNum);
 
             // 입출금계좌, 마이너스계좌 구분
             String selectedItem = choiceAccountTypeC.getSelectedItem();
@@ -532,7 +432,7 @@ public class AMSFrame extends Frame {
                 // 입출금계좌 선택시 입출금계좌일 경우만 삭제 진행
                 if (selectedItem.equals(AccountType.ACCOUNT_GENERAL.getName())) {
                     if (!(searchAccount instanceof MinusAccount)) {
-                        AMS.repository.removeAccount(accountNum, passwd);
+                        repository.removeAccount(accountNum, passwd);
                         JOptionPane.showMessageDialog(this, accountNum + " 계좌 삭제 정상 처리되었습니다.");
                     } else {
                         JOptionPane.showMessageDialog(this, "입력하신 계좌번호에 해당하는 입출금계좌가 존재하지 않습니다.");
@@ -541,7 +441,7 @@ public class AMSFrame extends Frame {
                 // 입출금계좌 선택시 입출금계좌일 경우만 삭제 진행
                 } else if (selectedItem.equals(AccountType.ACCOUNT_MINUS.getName())) {
                     if (searchAccount instanceof MinusAccount) {
-                        AMS.repository.removeAccount(accountNum, passwd);
+                        repository.removeAccount(accountNum, passwd);
                         JOptionPane.showMessageDialog(this, accountNum + " 계좌 삭제 정상 처리되었습니다.");
                     } else {
                         JOptionPane.showMessageDialog(this, "입입력하신 계좌번호에 해당하는 마이너스계좌가 존재하지 않습니다.");
@@ -558,11 +458,10 @@ public class AMSFrame extends Frame {
 
     /**
      * 계좌번호로 계좌 검색
-     * 
-     * @throws AccountException
+     *
      */
-    public void searchAccount() throws AccountException, NullPointerException {
-        
+    public void searchAccountByNum() {
+
         String accountNum = inputAccountNumTF.getText();
         int check = 0;
 
@@ -578,7 +477,7 @@ public class AMSFrame extends Frame {
         // 유효성 검사 통과시
         if (check == 0) {
             // 기능 실행
-            Account searchAccount = AMS.repository.searchAccount(accountNum);
+            Account searchAccount = repository.searchAccount(accountNum);
 
             accountListTA.setText(""); // TextArea 초기화
             textFieldReset(); // TextField 초기화
@@ -616,10 +515,9 @@ public class AMSFrame extends Frame {
 
     /**
      * 예금주명으로 계좌 검색
-     * 
-     * @throws AccountException
+     *
      */
-    public void searchAccountByOwner() throws AccountException, NullPointerException {
+    public void searchAccountByOwner() {
 
         String accountOwner = inputAccountOwnerTF.getText();
         int check = 0;
@@ -637,7 +535,7 @@ public class AMSFrame extends Frame {
         // 유효성 검사 통과시
         if (check == 0) {
             // 기능 실행
-            List<Account> searchAccounts = AMS.repository.searchAccountByOwner(accountOwner);
+            List<Account> searchAccounts = repository.searchAccountByOwner(accountOwner);
 
             accountListTA.setText(""); // TextArea 초기화
             textFieldReset(); // TextField 초기화
@@ -688,6 +586,7 @@ public class AMSFrame extends Frame {
      * 종료 메소드
      */
     private void exit() {
+        ((ObjectAccountRepository) repository).close();
         setVisible(false);
         dispose();
         System.exit(0);
@@ -705,29 +604,21 @@ public class AMSFrame extends Frame {
                 Object eventSource = e.getSource();
                 
                 // 조회 버튼 이벤트
-                if (eventSource == checkB) {
+                if (eventSource == searchNumB) {
                     try {
-                        searchAccount();
-                    } catch (AccountException e1) {
-                        JOptionPane.showMessageDialog(checkB, "해당 계좌번호와 일치하는 계좌가 존재하지 않습니다.");
-                        allList();
-                        textFieldReset();
-                    } catch (NullPointerException e1) {
-                        JOptionPane.showMessageDialog(checkB, "해당 계좌번호와 일치하는 계좌가 존재하지 않습니다.");
+                        searchAccountByNum();
+                    } catch (RuntimeException e1) {
+                        JOptionPane.showMessageDialog(searchNumB, "해당 계좌번호와 일치하는 계좌가 존재하지 않습니다.");
                         allList();
                         textFieldReset();
                     }
                     
                 // 검색 버튼 이벤트
-                } else if (eventSource == searchB) {
+                } else if (eventSource == searchOwnerB) {
                     try {
                         searchAccountByOwner();
-                    } catch (AccountException e1) {
-                        JOptionPane.showMessageDialog(checkB, "해당 계좌번호와 일치하는 계좌가 존재하지 않습니다.");
-                        allList();
-                        textFieldReset();
-                    } catch (NullPointerException e1) {
-                        JOptionPane.showMessageDialog(checkB, "해당 계좌번호와 일치하는 계좌가 존재하지 않습니다.");
+                    } catch (RuntimeException e1) {
+                        JOptionPane.showMessageDialog(searchOwnerB, "해당 예금주명과 일치하는 계좌가 존재하지 않습니다.");
                         allList();
                         textFieldReset();
                     }
@@ -736,19 +627,15 @@ public class AMSFrame extends Frame {
                 } else if (eventSource == deleteB) {
                     try {
                         removeAccount();
-                    } catch (AccountException e1) {
+                    } catch (RuntimeException e1) {
                         JOptionPane.showMessageDialog(deleteB, "해당 계좌번호와 일치하는 계좌가 존재하지 않거나, 비밀번호가 일치 하지않습니다.");
-                        allList();
-                        textFieldReset();
-                    } catch (NullPointerException e1) {
-                        JOptionPane.showMessageDialog(checkB, "해당 계좌번호와 일치하는 계좌가 존재하지 않습니다.");
                         allList();
                         textFieldReset();
                     }
                     
                 // 계좌 등록 버튼 이벤트
                 } else if (eventSource == registB) {
-                    createAccount();
+                        createAccount();
                     
                 // 전체 조회 버튼 이벤트
                 } else if (eventSource == totalViewB) {
@@ -770,7 +657,7 @@ public class AMSFrame extends Frame {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowOpened(WindowEvent e) {
-                allInputDisable();
+                allInputEnable(false);
                 allList();
             }
         });
@@ -782,51 +669,79 @@ public class AMSFrame extends Frame {
         totalViewB.addActionListener(actionHandler);
 
         // 계좌번호 조회
-        checkB.addActionListener(actionHandler);
+        searchNumB.addActionListener(actionHandler);
 
         // 예금주명 조회
-        searchB.addActionListener(actionHandler);
+        searchOwnerB.addActionListener(actionHandler);
 
         // 계좌 삭제
         deleteB.addActionListener(actionHandler);
-
-        // 계좌 종류 초이스 선택
-        choiceAccountTypeC.addItemListener(new ItemListener() {
-            
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                if (e.getStateChange() == ItemEvent.SELECTED) {
-                    if (choiceAccountTypeC.getSelectedItem().equals("전체")) {
-                        selectAccountType(AccountType.ACCOUNT_ALL);
-                    } else if (choiceAccountTypeC.getSelectedItem().equals("입출금계좌")) {
-                        selectAccountType(AccountType.ACCOUNT_GENERAL);
-                    } else if (choiceAccountTypeC.getSelectedItem().equals("마이너스계좌")) {
-                        selectAccountType(AccountType.ACCOUNT_MINUS);
-                    }
-                }
-            }
-        });
         
-        // 기능 종류 초이스 선택
-        choiceActionTypeC.addItemListener(new ItemListener() {
-
+        // 계좌 종류 선택에 따른 입력칸 활성화 
+        class ItemHandlerAcc implements ItemListener {
             @Override
             public void itemStateChanged(ItemEvent e) {
                 if (e.getStateChange() == ItemEvent.SELECTED) {
-                    if (choiceActionTypeC.getSelectedItem().equals("기능선택")) {
-                        selectActionType(ActionType.ACTION_ALL);
-                    } else if (choiceActionTypeC.getSelectedItem().equals("등록")) {
-                        selectActionType(ActionType.ACCOUNT_ADD);
-                    } else if (choiceActionTypeC.getSelectedItem().equals("조회")) {
-                        selectActionType(ActionType.ACCOUNT_CHECK);
-                    } else if (choiceActionTypeC.getSelectedItem().equals("검색")) {
-                        selectActionType(ActionType.ACCOUNT_SEARCH);
-                    } else if (choiceActionTypeC.getSelectedItem().equals("삭제")) {
-                        selectActionType(ActionType.ACCOUNT_DELETE);
+                    String selectedItemA = choiceAccountTypeC.getSelectedItem();
+                    String selectedItemB = choiceActionTypeC.getSelectedItem();
+                    if (selectedItemA.equals(AccountType.ACCOUNT_ALL.getName())) {
+                        allInputEnable(false);
+                        choiceActionTypeC.select("기능선택");
+                    } else if (selectedItemB.equals(ActionType.ACCOUNT_ADD.getName())) {
+                        if (selectedItemA.equals(AccountType.ACCOUNT_GENERAL.getName())) {
+                            allInputEnable(false);
+                            generalInputEnable(true);
+                        } else if (selectedItemA.equals(AccountType.ACCOUNT_MINUS.getName())) {
+                            allInputEnable(false);
+                            minusInputEnable(true);
+                        }
+                    } else {
+                        typeInputEnable(true);
                     }
                 }
             }
-        });
+        }
+        ItemListener itemListenerAcc = new ItemHandlerAcc();
+        choiceAccountTypeC.addItemListener(itemListenerAcc);
+        
+        // 기능 종류 선택에 따른 입력칸 활성화 
+        class ItemHandlerType implements ItemListener {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                    String selectedItemA = choiceAccountTypeC.getSelectedItem();
+                    String selectedItemB = choiceActionTypeC.getSelectedItem();
+                    if (selectedItemB.equals(ActionType.ACTION_ALL.getName())) {
+                        allInputEnable(false);
+                        typeInputEnable(true);
+                    } else if (selectedItemB.equals(ActionType.ACCOUNT_CHECK.getName())) {
+                        allInputEnable(false);
+                        checkEnable(true);
+                    } else if (selectedItemB.equals(ActionType.ACCOUNT_SEARCH.getName())) {
+                        allInputEnable(false);
+                        searchEnable(true);
+                    } else if (selectedItemB.equals(ActionType.ACCOUNT_DELETE.getName())) {
+                        allInputEnable(false);
+                        deleteEnable(true);
+                    } else if (selectedItemB.equals(ActionType.ACCOUNT_ADD.getName())) {
+                        if (selectedItemA.equals(AccountType.ACCOUNT_ALL.getName())) {
+                            allInputEnable(false);
+                            typeInputEnable(true);
+                        } else if (selectedItemA.equals(AccountType.ACCOUNT_GENERAL.getName())) {
+                            allInputEnable(false);
+                            generalInputEnable(true);
+                        } else if (selectedItemA.equals(AccountType.ACCOUNT_MINUS.getName())) {
+                            allInputEnable(false);
+                            minusInputEnable(true);  
+                        }
+                    }
+                }
+            }
+
+        }
+        ItemListener itemListenerType = new ItemHandlerType();
+        choiceActionTypeC.addItemListener(itemListenerType);
+        
 
     }
 }

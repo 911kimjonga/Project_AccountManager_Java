@@ -1,11 +1,13 @@
 package com.jw.amapp.domain;
 
+import java.io.Serializable;
+
 /**
  * 은행 계좌 추상화
  *
  * @author 김종원
  */
-public class Account {
+public class Account implements Serializable {
 
     // 필드
     private String accountNum;
@@ -33,7 +35,7 @@ public class Account {
     }
 
     public Account(String accountOwner, int passwd, long restMoney) {
-        this.accountNum = (accountId++) + "";
+        this.accountNum = String.valueOf(accountId++);
         this.accountOwner = accountOwner;
         this.passwd = passwd;
         this.restMoney = restMoney;
